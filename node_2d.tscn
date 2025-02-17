@@ -1,0 +1,268 @@
+[gd_scene load_steps=5 format=3 uid="uid://bukdp7wqte52a"]
+
+[ext_resource type="Texture2D" uid="uid://bsbctp76t2d8g" path="res://pixel.png" id="1_xdsnp"]
+[ext_resource type="Script" path="res://camera_2d.gd" id="2_2r5gc"]
+[ext_resource type="AudioStream" uid="uid://bvalxdgrwc3rm" path="res://The 8-Bit Beatles - Please Please Me [ ezmp3.cc ].mp3" id="3_66fjc"]
+
+[sub_resource type="GDScript" id="GDScript_7sd53"]
+script/source = "extends Node2D
+
+@export var sprite_texture: Texture2D
+@export var base_replication_interval: float = 1.0  # Fixed replication interval
+@export var base_lifespan: float = 60.0  
+@export var max_sprites: int = 100  
+@export var replication_change_probability: float = 0.3  
+@export var replication_change_amount: float = 0.2  
+@export var lifespan_change_probability: float = 0.3  
+@export var lifespan_change_amount: float = 5.0  
+@export var color_change_probability: float = 0.5  
+@export var color_change_amount: float = 0.2  
+
+@export var movement_interval: float = 2.0  
+@export var movement_change_probability: float = 0.3  
+@export var movement_change_amount: float = 0.5  
+
+var occupied_positions = {}  
+var sprite_count = 0  
+
+# Adjusted CanvasLayer path
+@onready var canvas_layer = get_node(\"CanvasLayer\")  # Relative to the scene root
+@onready var increase_button = get_node(\"CanvasLayer/Control/IncreaseButton\")
+@onready var decrease_button = get_node(\"CanvasLayer/Control/DecreaseButton\")
+@onready var line_edit = get_node(\"CanvasLayer/Control/LineEdit\")
+
+func _ready():
+	randomize()
+
+	if increase_button and decrease_button and line_edit:
+		increase_button.pressed.connect(_on_increase_button_pressed)
+		decrease_button.pressed.connect(_on_decrease_button_pressed)
+		line_edit.text_changed.connect(_on_line_edit_text_changed)
+		line_edit.text = str(max_sprites)
+	else:
+		print(\"Error: One or more UI elements not found!\")
+
+	var viewport_size = get_viewport_rect().size
+	var center_position = viewport_size / 2
+	create_sprite(center_position, base_replication_interval, base_lifespan, Color(1, 1, 1), movement_interval)
+
+func _process(_delta):
+	if Input.is_action_just_pressed(\"reset_game\"):
+		get_tree().reload_current_scene()
+
+	if sprite_count == 0:
+		var viewport_size = get_viewport_rect().size
+		var center_position = viewport_size / 2
+		create_sprite(center_position, base_replication_interval, base_lifespan, Color(1, 1, 1), movement_interval)
+
+func create_sprite(spawn_position: Vector2, replication_interval: float, lifespan: float, color: Color, move_interval: float):
+	if sprite_count >= max_sprites:
+		return  
+
+	var new_sprite = Sprite2D.new()
+	new_sprite.texture = sprite_texture
+	new_sprite.position = spawn_position
+	new_sprite.modulate = color
+	new_sprite.set_meta(\"replication_interval\", replication_interval)  # Fixed interval for replication
+	new_sprite.set_meta(\"lifespan\", lifespan)
+	new_sprite.set_meta(\"replications_done\", 0)
+	new_sprite.set_meta(\"color\", color)
+	new_sprite.set_meta(\"movement_interval\", move_interval)  
+
+	add_child(new_sprite)
+	occupied_positions[spawn_position] = true  
+	sprite_count += 1  
+
+	start_replication(new_sprite)
+	start_death_timer(new_sprite, lifespan)
+	start_movement_timer(new_sprite, move_interval)
+
+func start_replication(sprite: Sprite2D):
+	var replication_interval = sprite.get_meta(\"replication_interval\")
+	var lifespan = sprite.get_meta(\"lifespan\")
+	var max_replications = int(lifespan / replication_interval)  # Calculate maximum replications based on lifespan
+
+	var timer = Timer.new()
+	timer.wait_time = replication_interval
+	timer.one_shot = false  # Keep this timer repeating until lifespan ends
+	timer.timeout.connect(func(): _on_replication_timeout(sprite, max_replications))  # Bind max_replications to timer
+	sprite.add_child(timer)
+	timer.start()
+
+func start_death_timer(sprite: Sprite2D, lifespan: float):
+	var death_timer = Timer.new()
+	death_timer.wait_time = lifespan
+	death_timer.one_shot = true
+	death_timer.timeout.connect(func(): _on_death_timeout(sprite))
+	sprite.add_child(death_timer)
+	death_timer.start()
+
+func start_movement_timer(sprite: Sprite2D, move_interval: float):
+	if !sprite.is_inside_tree():
+		return
+
+	var move_timer = Timer.new()
+	move_timer.wait_time = move_interval
+	move_timer.one_shot = false
+	move_timer.timeout.connect(func(): _on_movement_timeout(sprite))
+	sprite.add_child(move_timer)
+	move_timer.start()
+
+func _on_replication_timeout(sprite: Sprite2D, max_replications: int):
+	var replications_done = sprite.get_meta(\"replications_done\")
+
+	if replications_done >= max_replications:
+		return  # Stop replicating if the sprite has reached the maximum replications
+
+	var directions = [Vector2.RIGHT, Vector2.LEFT, Vector2.UP, Vector2.DOWN]
+	directions.shuffle()
+
+	var new_position = null
+	for direction in directions:
+		var potential_position = sprite.position + direction * sprite_texture.get_size()
+		if not occupied_positions.has(potential_position):
+			new_position = potential_position
+			break
+
+	if new_position:
+		var replication_interval = sprite.get_meta(\"replication_interval\")
+		var new_lifespan = sprite.get_meta(\"lifespan\")
+		var new_color = sprite.get_meta(\"color\")
+		var new_movement_interval = sprite.get_meta(\"movement_interval\")
+
+		# Control the mutation of the replication interval (optional)
+		if randf() < replication_change_probability:
+			if randf() < 0.5:
+				replication_interval += replication_change_amount
+			else:
+				replication_interval -= replication_change_amount
+			replication_interval = max(0.1, replication_interval)
+
+		# Control lifespan changes
+		if randf() < lifespan_change_probability:
+			if randf() < 0.5:
+				new_lifespan += lifespan_change_amount
+			else:
+				new_lifespan -= lifespan_change_amount
+			new_lifespan = max(1, new_lifespan)
+
+		# Control color changes
+		if randf() < color_change_probability:
+			new_color = Color(
+				clamp(new_color.r + randf_range(-color_change_amount, color_change_amount), 0, 1),
+				clamp(new_color.g + randf_range(-color_change_amount, color_change_amount), 0, 1),
+				clamp(new_color.b + randf_range(-color_change_amount, color_change_amount), 0, 1),
+				new_color.a
+			)
+
+		# Control movement interval changes
+		if randf() < movement_change_probability:
+			if randf() < 0.5:
+				new_movement_interval += movement_change_amount
+			else:
+				new_movement_interval -= movement_change_amount
+			new_movement_interval = max(0.1, new_movement_interval)
+
+		create_sprite(new_position, replication_interval, new_lifespan, new_color, new_movement_interval)
+
+	sprite.set_meta(\"replications_done\", replications_done + 1)  # Mark that this sprite has replicated once
+
+func _on_death_timeout(sprite: Sprite2D):
+	occupied_positions.erase(sprite.position)
+	sprite.queue_free()
+	sprite_count -= 1  
+
+func _on_movement_timeout(sprite: Sprite2D):
+	if sprite_count >= max_sprites or not sprite.is_inside_tree():
+		return  
+
+	# Each sprite now moves randomly each time its movement timer triggers
+	var directions = [Vector2.RIGHT, Vector2.LEFT, Vector2.UP, Vector2.DOWN]
+	directions.shuffle()
+
+	var new_position = null
+	for direction in directions:
+		var potential_position = sprite.position + direction * sprite_texture.get_size()
+		if not occupied_positions.has(potential_position):
+			new_position = potential_position
+			break
+
+	if new_position:
+		occupied_positions.erase(sprite.position)  
+		sprite.position = new_position  
+		occupied_positions[new_position] = true  
+
+# UI Controls
+func _on_increase_button_pressed():
+	max_sprites += 10
+	if line_edit:
+		line_edit.text = str(max_sprites)
+
+func _on_decrease_button_pressed():
+	max_sprites = max(1, max_sprites - 10)
+	if line_edit:
+		line_edit.text = str(max_sprites)
+
+func _on_line_edit_text_changed(new_text: String):
+	# Validate if the input is a number
+	if new_text.is_valid_int():
+		max_sprites = int(new_text)
+	else:
+		# If invalid input, reset to the previous valid value
+		line_edit.text = str(max_sprites)
+		line_edit.clear_focus()  # Deselect the LineEdit
+"
+
+[node name="Main" type="Node2D"]
+script = SubResource("GDScript_7sd53")
+sprite_texture = ExtResource("1_xdsnp")
+base_replication_interval = 0.1
+base_lifespan = 0.1
+replication_change_probability = 0.1
+replication_change_amount = 0.1
+lifespan_change_probability = 0.1
+lifespan_change_amount = 0.1
+color_change_probability = 0.1
+color_change_amount = 0.1
+movement_interval = 0.1
+movement_change_probability = 0.1
+movement_change_amount = 0.1
+
+[node name="Camera2D" type="Camera2D" parent="."]
+position = Vector2(575, 321)
+script = ExtResource("2_2r5gc")
+camera_speed = 500.0
+
+[node name="AudioStreamPlayer2D" type="AudioStreamPlayer2D" parent="."]
+stream = ExtResource("3_66fjc")
+autoplay = true
+max_distance = 20000.0
+parameters/looping = true
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="Control" type="Control" parent="CanvasLayer"]
+layout_mode = 3
+anchors_preset = 0
+offset_right = 40.0
+offset_bottom = 40.0
+
+[node name="LineEdit" type="LineEdit" parent="CanvasLayer/Control"]
+layout_mode = 0
+offset_right = 67.0625
+offset_bottom = 31.0
+
+[node name="IncreaseButton" type="Button" parent="CanvasLayer/Control"]
+layout_mode = 0
+offset_top = 28.0
+offset_right = 18.0
+offset_bottom = 59.0
+text = "+"
+
+[node name="DecreaseButton" type="Button" parent="CanvasLayer/Control"]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 28.0
+offset_right = 30.0
+offset_bottom = 59.0
+text = "-"
