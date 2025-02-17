@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Godot Game</title>
+    <script src="game.js"></script> <!-- Path to the generated game.js file -->
+</head>
+<body>
+    <h1>My Godot Game</h1>
+    <canvas id="canvas" width="800" height="600"></canvas>
+    <script>
+        // This will tell the game to use the canvas and start the game
+        var Module = {
+            canvas: document.getElementById('canvas'),
+            preRun: [],
+            postRun: [],
+            print: function(text) { console.log(text) },
+            printErr: function(text) { console.error(text) },
+        };
+    </script>
+</body>
+</html>
