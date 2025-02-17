@@ -1,18 +1,21 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Your Game Title</title>
+    <script src="game.js"></script>
 </head>
 <body>
-    <script src="godot.js"></script>
     <script>
-        var gameInstance = new Godot.Game({
-            "canvas": "gameCanvas",  // Create a canvas element for the game
-            "width": 800,
-            "height": 600
-        });
+        var Module = {
+            TOTAL_MEMORY: 16777216,
+            errorhandler: null,
+            onRuntimeInitialized: function() {
+                // Initialization code for when the WebAssembly runtime is ready
+                console.log("Game Loaded");
+            }
+        };
     </script>
 </body>
 </html>
