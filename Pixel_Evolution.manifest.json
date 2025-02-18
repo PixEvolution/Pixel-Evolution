@@ -20,5 +20,5 @@
   ],
   "name": "Pixel Evolution",
   "orientation": "any",
-  "start_url": "./Pixel_Evolution.html"  // Update this to index.html
+  "start_url": "./Index.html"  // Update this to index.html
 }
