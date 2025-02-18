@@ -4,7 +4,7 @@
 // Incrementing CACHE_VERSION will kick off the install event and force
 // previously cached resources to be updated from the network.
 /** @type {string} */
-const CACHE_VERSION = '1739837759|90298973';
+const CACHE_VERSION = '1739841945|36136716';
 /** @type {string} */
 const CACHE_PREFIX = 'Pixel Evolution-sw-cache-';
 const CACHE_NAME = CACHE_PREFIX + CACHE_VERSION;
