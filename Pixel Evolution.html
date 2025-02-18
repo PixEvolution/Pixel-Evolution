@@ -76,9 +76,10 @@ body {
 	z-index: 1;
 }
 		</style>
-		<link id="-gd-engine-icon" rel="icon" type="image/png" href="Pixel_Evolution.icon.png" />
-		<link rel="apple-touch-icon" href="Pixel_Evolution.apple-touch-icon.png"/>
-		<link rel="manifest" href="Pixel_Evolution.manifest.json">
+		<link id="-gd-engine-icon" rel="icon" type="image/png" href="Pixel Evolution.icon.png" />
+<link rel="apple-touch-icon" href="Pixel Evolution.apple-touch-icon.png"/>
+<link rel="manifest" href="Pixel Evolution.manifest.json">
+
 	</head>
 	<body>
 		<canvas id="canvas">
@@ -90,28 +91,14 @@ body {
 		</noscript>
 
 		<div id="status">
-			<img id="status-splash" src="Pixel_Evolution.png" alt="">
+			<img id="status-splash" src="Pixel Evolution.png" alt="">
 			<progress id="status-progress"></progress>
 			<div id="status-notice"></div>
 		</div>
 
-		<script src="Pixel_Evolution.js"></script>
+		<script src="Pixel Evolution.js"></script>
 		<script>
-const GODOT_CONFIG = {
-    "args": [],
-    "canvasResizePolicy": 2,
-    "ensureCrossOriginIsolationHeaders": true,
-    "executable": "Pixel_Evolution",
-    "experimentalVK": false,
-    "fileSizes": {
-        "Pixel_Evolution.pck": 33940368,
-        "Pixel_Evolution.wasm": 43016933
-    },
-    "focusCanvas": true,
-    "gdextensionLibs": [],
-    "serviceWorker": "Pixel_Evolution.service.worker.js"
-};
-
+const GODOT_CONFIG = {"args":[],"canvasResizePolicy":2,"ensureCrossOriginIsolationHeaders":true,"executable":"Pixel Evolution","experimentalVK":false,"fileSizes":{"Pixel Evolution.pck":33940368,"Pixel Evolution.wasm":43016933},"focusCanvas":true,"gdextensionLibs":[],"serviceWorker":"Pixel Evolution.service.worker.js"};
 const GODOT_THREADS_ENABLED = false;
 const engine = new Engine(GODOT_CONFIG);
 
@@ -156,7 +143,7 @@ const engine = new Engine(GODOT_CONFIG);
 		} else if (typeof err === 'string') {
 			setStatusNotice(err);
 		} else {
-			setStatusNotice('An unknown error occurred');
+			setStatusNotice('An unknown error occured');
 		}
 		setStatusMode('notice');
 		initializing = false;
@@ -210,3 +197,4 @@ const engine = new Engine(GODOT_CONFIG);
 		</script>
 	</body>
 </html>
+
